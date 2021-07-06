@@ -20,10 +20,10 @@ package main
 
 import (
 	"github.com/open-horizon/edge-sync-service/core/base"
-	"github.com/open-horizon/mms-cloud-container/auth"
+	css "github.com/open-horizon/mms-cloud-container/auth"
 )
 
 func main() {
 	base.ConfigStandaloneSyncService()
-	base.StandaloneSyncService(&auth.HorizonAuthenticate{})
+	base.StandaloneSyncService(&css.HorizonAuthenticate{})
 }
