@@ -8,4 +8,4 @@ require (
 	github.com/open-horizon/edge-utilities v0.0.0-20190711093331-0908b45a7152
 )
 
-replace github.com/open-horizon/anax => /home/max/go/src/github.com/open-horizon/anax
+
