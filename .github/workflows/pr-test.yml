@@ -1,0 +1,33 @@
+# This pipeline is to build anax binaries
+
+name: pr-test
+
+on: 
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # prepare the environment
+      - name: Set up golang 1.14.1
+        uses: actions/setup-go@v2
+        with:
+           go-version: '1.14.1'
+
+      # build binary
+      - name: Build binary
+        shell: bash {0}
+        run: |
+          make
+          if [ ! -f "./cloud-sync-service" ]; then
+            echo "cloud-sync-service binary does not exist"
+            exit 1
+          fi

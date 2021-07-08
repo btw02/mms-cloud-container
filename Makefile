@@ -60,7 +60,7 @@ $(CSS_EXECUTABLE): $(shell find . -name '*.go') gopathlinks
 	cd $(PKGPATH) && \
 	    export GOPATH=$(TMPGOPATH);
 	    go get; \
-	$(COMPILE_ARGS) go build $(GO_BUILD_LDFLAGS) -o $(CSS_EXECUTABLE) $(GOPATH)/src/github.com/open-horizon/mms-cloud-container/main.go;
+	$(COMPILE_ARGS) go build $(GO_BUILD_LDFLAGS) -o $(CSS_EXECUTABLE)
 
 
 css-docker-image: css-clean
