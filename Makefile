@@ -18,20 +18,20 @@ DOCKER_REGISTRY ?= "dockerhub"
 FSS_REGISTRY ?= $(DOCKER_REGISTRY)
 
 export VERSION ?= 1.6.1
-# BUILD_NUMBER will be added to the version if set. It can be a simple number or something like a numeric timestamp or jenkins hash.
+# BUILD_NUM will be added to the version if set. It can be a simple number or something like a numeric timestamp or jenkins hash.
 # It can NOT contain dashes, but can contain: plus, period, and tilde.
-export BUILD_NUMBER
+export BUILD_NUM
 # only set DISTRO if the artifact needs to be built differently for this distro. Value can be like "ubuntu" or "ubuntu.bionic". Will be appended to BUILD_NUMBER
 export DISTRO
 
-ifdef BUILD_NUMBER
-BUILD_NUMBER := -$(BUILD_NUMBER:-%=%)
+ifdef BUILD_NUM
+BUILD_NUM := -$(BUILD_NUM:-%=%)
 endif
 
 # The CSS and its production container. This container is NOT used by hzn dev.
 CSS_EXECUTABLE := cloud-sync-service
 CSS_CONTAINER_DIR := css
-CSS_IMAGE_VERSION ?= $(VERSION)$(BUILD_NUMBER)
+CSS_IMAGE_VERSION ?= $(VERSION)$(BUILD_NUM)
 CSS_IMAGE_BASE = image/cloud-sync-service
 CSS_IMAGE_NAME = $(IMAGE_REPO)/$(arch)_cloud-sync-service
 CSS_IMAGE = $(CSS_IMAGE_NAME):$(CSS_IMAGE_VERSION)
@@ -47,7 +47,7 @@ export PKGPATH := $(TMPGOPATH)/src/github.com/open-horizon/$(EXECUTABLE)
 
 
 # This sets the version in the go code dynamically at build time. See https://www.digitalocean.com/community/tutorials/using-ldflags-to-set-version-information-for-go-applications
-GO_BUILD_LDFLAGS := -X 'github.com/open-horizon/anax/version.HORIZON_VERSION=$(VERSION)$(BUILD_NUMBER)'
+GO_BUILD_LDFLAGS := -X 'github.com/open-horizon/anax/version.HORIZON_VERSION=$(VERSION)$(BUILD_NUM)'
 
 ifdef GO_BUILD_LDFLAGS
 	GO_BUILD_LDFLAGS := -ldflags="$(GO_BUILD_LDFLAGS)"
