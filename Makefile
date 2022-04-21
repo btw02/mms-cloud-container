@@ -17,7 +17,7 @@ DOCKER_MAYBE_CACHE ?= --no-cache
 DOCKER_REGISTRY ?= "dockerhub"
 FSS_REGISTRY ?= $(DOCKER_REGISTRY)
 
-export VERSION ?= 1.8.4
+export VERSION ?= 1.9.0
 # BUILD_NUM will be added to the version if set. It can be a simple number or something like a numeric timestamp or jenkins hash.
 # It can NOT contain dashes, but can contain: plus, period, and tilde.
 export BUILD_NUM
