@@ -177,13 +177,10 @@ func (auth *HorizonAuthenticate) authenticateWithExchange(otherOrg string, appKe
 
 		// Agbots are admins by default. If an error is returned, check if the identity is a user.
 		if err := auth.verifyAgbotIdentity(parts[1], parts[0], appSecret, ExchangeURL()); err == nil {
-			// We have a valid agbot identity. Agbots only call a few of the APIs. Verify that it's one of these:
-			// org - this is the API used to query for object policies
-			if !strings.Contains(otherOrg, "/") {
-				authCode = security.AuthSyncAdmin // This makes the agbot a super user in the CSS so that it can query multiple orgs.
-				authOrg = otherOrg
-				authId = parts[1]
-			}
+			// We have a valid agbot identity.
+			authCode = security.AuthSyncAdmin // This makes the agbot a super user in the CSS so that it can query multiple orgs.
+			authOrg = parts[0]
+			authId = parts[1]
 
 		} else {
 			// Check if the identity is a user, since we know its not an agbot. If an error is returned, check if the identity is a node user.
@@ -210,7 +207,7 @@ func (auth *HorizonAuthenticate) authenticateWithExchange(otherOrg string, appKe
 						log.Error(cssALS(fmt.Sprintf("unable to verify identity %v as exchange node, error %v", appKey, err)))
 					}
 				} else {
-					// exchange node is AuthNodeUser. Without configuring ACLs, AuthNodeUser only has read access to public objects of any org
+					// exchange node is AuthNodeUser. Without configuring ACLs, AuthNodeUser only has read access to public objects of any org, and have read access to manifest under its own org
 					authCode = security.AuthNodeUser
 					authOrg = parts[0]
 					authId = parts[1]
@@ -220,10 +217,15 @@ func (auth *HorizonAuthenticate) authenticateWithExchange(otherOrg string, appKe
 				authCode = security.AuthSyncAdmin
 				authOrg = parts[0]
 				authId = username
-			} else {
-				// exchange regular users are always mapped to authAdmin so that ACLs do not need to be configured in order for a regular user to get read/write access to objects in their own org.
-				// It also gives them read access to public objects in other orgs without needing an ACL
+			} else if exchangeRole == EX_ORG_ADMIN {
+				// exchange org admin are authAdmin, have write/read acess to MMS objects and manifests under its own org
 				authCode = security.AuthAdmin
+				authOrg = parts[0]
+				authId = username
+			} else {
+				// exchange regular users are always mapped to AuthObjectAdmin, have write/read access to all MMS objects under its own org
+				// It also gives them read access to public objects in other orgs without needing an ACL. AuthObjectAdmin doesn't have write access to manifests
+				authCode = security.AuthObjectAdmin
 				authOrg = parts[0]
 				authId = username
 			}
@@ -458,7 +460,9 @@ func (auth *HorizonAuthenticate) invokeExchange(url string, user string, pw stri
 	// Add the basic auth header so that the exchange will authenticate.
 	req.SetBasicAuth(user, pw)
 	req.Header.Add("Accept", "application/json")
-	req.Close = true
+
+	// Remove the req.Close so that connections from CSS to Exchange can be reused
+	//req.Close = true
 
 	// Send the request to verify the user.
 	resp, err := auth.httpClient.Do(req)
@@ -486,9 +490,6 @@ func (auth *HorizonAuthenticate) invokeExchangeWithRetry(url string, user string
 			}
 		}
 
-		if err == nil {
-			break
-		}
 		if exchange.IsTransportError(resp, err) {
 			// Log the transport error and retry
 			if trace.IsLogging(logger.TRACE) {
@@ -559,9 +560,13 @@ func newHTTPClient(certPath string) (*http.Client, error) {
 			TLSHandshakeTimeout:   20 * time.Second,
 			ResponseHeaderTimeout: 20 * time.Second,
 			ExpectContinueTimeout: 8 * time.Second,
-			MaxIdleConns:          20,
-			IdleConnTimeout:       120 * time.Second,
-			TLSClientConfig:       &tlsConf,
+
+			// Guidance from https://www.loginradius.com/blog/engineering/tune-the-go-http-client-for-high-performance/
+			MaxIdleConns:        20,
+			MaxConnsPerHost:     20,
+			MaxIdleConnsPerHost: 20,
+			IdleConnTimeout:     120 * time.Second,
+			TLSClientConfig:     &tlsConf,
 		},
 	}, nil
 
